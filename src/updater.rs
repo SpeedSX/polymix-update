@@ -1,6 +1,6 @@
 use std::{error::Error, fs, time::SystemTime};
 use chrono::{DateTime, Local, Utc};
-use glob::glob;
+use glob::{MatchOptions, glob_with};
 
 use crate::{config::Config, db::DB};
 
@@ -34,7 +34,12 @@ impl Updater<'_> {
 
         let db_files = client.get_db_files().await?;
 
-        for entry in glob(file_mask)? {
+        let options = MatchOptions {
+            case_sensitive: false,
+            require_literal_separator: false,
+            require_literal_leading_dot: false,
+        };
+        for entry in glob_with(file_mask, options)? {
             let path = entry?;
 
             let metadata = fs::metadata(&path)?;
