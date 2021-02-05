@@ -12,6 +12,8 @@ serde_json = "1.0"
 tiberius = { version = "0.5", features=["chrono", "tds73", "sql-browser-tokio"] }
 tokio = { version = "1", features = ["macros", "rt", "net"] }
 tokio-util = { version = "0.6", features = ["compat"] }
+glob = "0.3"
+chrono = "0.4"
 
 [profile.release]
 opt-level="s"
