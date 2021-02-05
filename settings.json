@@ -1,0 +1,18 @@
+{
+    "connection_string": "server=tcp:localhost,1433;TrustServerCertificate=true;User=sa;Password=sas;Database=Consum",
+    "update_mode": [
+        {
+            "name": "exe",
+            "file_mask": "*.exe"
+        },
+        {
+            "name": "xls",
+            "file_mask": "*.xls"
+        },
+        {
+            "name": "all",
+            "file_mask": "*.exe;*.xls",
+            "is_default": true
+        }
+    ]
+}
