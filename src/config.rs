@@ -1,7 +1,7 @@
 use serde::{Deserialize, Serialize};
-use std::{error::Error, path::Path};
 use std::fs::File;
 use std::io::BufReader;
+use std::{error::Error, path::Path};
 
 #[derive(Serialize, Deserialize)]
 pub struct UpdateMode {
@@ -22,4 +22,4 @@ pub fn get_config<P: AsRef<Path>>(path: P) -> Result<Config, Box<dyn Error>> {
     let reader = BufReader::new(file);
     let config = serde_json::from_reader(reader)?;
     Ok(config)
-}    
+}
