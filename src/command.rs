@@ -4,6 +4,7 @@ use std::str::FromStr;
 pub enum Command {
     Upload,
     Download,
+    List,
 }
 
 impl FromStr for Command {
@@ -13,6 +14,7 @@ impl FromStr for Command {
         match input.to_lowercase().as_str() {
             "upload" => Ok(Command::Upload),
             "download" => Ok(Command::Download),
+            "list" => Ok(Command::List),
             _ => Err(()),
         }
     }

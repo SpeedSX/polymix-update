@@ -1,4 +1,4 @@
-use chrono::{DateTime, Local, Utc};
+use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use glob::{glob_with, MatchOptions, Pattern};
 use std::{error::Error, fs, process, time::SystemTime};
 
@@ -23,6 +23,7 @@ impl Updater<'_> {
         match self.command {
             Command::Upload => self.upload().await?,
             Command::Download => self.download().await?,
+            Command::List => self.list().await?,
         }
         Ok(())
     }
@@ -49,8 +50,19 @@ impl Updater<'_> {
         Ok(())
     }
 
+    async fn list(&self) -> Result<(), Box<dyn Error>> {
+        match self.get_file_mask() {
+            Some(pattern) => self.list_files(&pattern).await?,
+            None => {
+                // TODO: we do not handle default file masks at the moment
+                process::exit(1)
+            }
+        }
+        Ok(())
+    }
+
     async fn download_files(&self, pattern_str: &str) -> Result<(), Box<dyn Error>> {
-        let mut client = DB::connect(self.config.connection_string.as_str()).await?;
+        let mut client = self.connect().await?;
 
         println!("Downloading files..."); // TODO do not download all files
 
@@ -62,7 +74,6 @@ impl Updater<'_> {
                 print!("{}...", db_file.name);
                 match db_file.content {
                     Some(content) => {
-                        // TODO use write_all
                         fs::write(db_file.name, content)?;
                         println!("OK");
                     }
@@ -77,7 +88,12 @@ impl Updater<'_> {
     async fn upload_files(&self, pattern_str: &str) -> Result<(), Box<dyn Error>> {
         let mut client = self.connect().await?;
 
-        let db_files = client.get_db_files().await?;
+        let db_files: Vec<String> = client
+            .get_db_files()
+            .await?
+            .iter()
+            .map(|f| f.name.clone())
+            .collect();
 
         let options = MatchOptions {
             case_sensitive: false,
@@ -96,7 +112,7 @@ impl Updater<'_> {
                 println!(
                     "{}: Last modified {}, size {} bytes",
                     file_name,
-                    Self::format_time(last_modified),
+                    Self::format_date_time(last_modified),
                     metadata.len(),
                 );
             }
@@ -110,6 +126,27 @@ impl Updater<'_> {
             client
                 .upload_file_content(file_name, file_date, content)
                 .await?;
+        }
+
+        Ok(())
+    }
+
+    async fn list_files(&self, pattern_str: &str) -> Result<(), Box<dyn Error>> {
+        let mut client = self.connect().await?;
+
+        //println!("Reading file list...");
+
+        let db_files = client.get_db_files().await?;
+
+        for db_file in db_files {
+            let pattern = Pattern::new(pattern_str)?;
+            if pattern.matches(db_file.name.as_str()) {
+                print!(
+                    "{}\t{}",
+                    db_file.name,
+                    Self::format_db_date_time(db_file.date)
+                );
+            }
         }
 
         Ok(())
@@ -141,8 +178,12 @@ impl Updater<'_> {
         Ok(DB::connect(self.config.connection_string.as_str()).await?)
     }
 
-    fn format_time(system_time: SystemTime) -> String {
+    fn format_date_time(system_time: SystemTime) -> String {
         let datetime: DateTime<Local> = system_time.into();
         datetime.format("%d/%m/%Y %T").to_string()
+    }
+
+    fn format_db_date_time(dt: NaiveDateTime) -> String {
+        dt.format("%d/%m/%Y %T").to_string()
     }
 }

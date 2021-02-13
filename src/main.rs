@@ -41,17 +41,20 @@ async fn run() -> Result<(), Box<dyn Error>> {
                 process::exit(1);
             }
         }
-        println!("\nDone");
     }
 
     Ok(())
 }
 
 fn print_usage() {
-    println!("USAGE:
-    \tpolymix-update [COMMAND] [mode] [FLAGS]\n");
-    println!("COMMANDS:
+    println!(
+        "USAGE:
+    \tpolymix-update [COMMAND] [mode] [FLAGS]\n"
+    );
+    println!(
+        "COMMANDS:
     \tupload\t\tWrite files from current directory to database
     \tdownload\tRead files from database and store in current directory
-    \tlist\t\tlist files stored in database\n");
+    \tlist\t\tlist files stored in database\n"
+    );
 }
