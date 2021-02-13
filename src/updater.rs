@@ -13,8 +13,8 @@ pub struct Updater<'a> {
 impl Updater<'_> {
     pub fn new<'a>(config: &'a Config, command: Command, update_mode_name: &str) -> Updater<'a> {
         Updater {
-            config: config,
-            command: command,
+            config,
+            command,
             update_mode_name: update_mode_name.to_owned(),
         }
     }

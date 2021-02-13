@@ -47,12 +47,11 @@ async fn run() -> Result<(), Box<dyn Error>> {
     Ok(())
 }
 
-fn print_usage() -> () {
+fn print_usage() {
     println!("USAGE:
     \tpolymix-update [COMMAND] [mode] [FLAGS]\n");
     println!("COMMANDS:
     \tupload\t\tWrite files from current directory to database
     \tdownload\tRead files from database and store in current directory
     \tlist\t\tlist files stored in database\n");
-    println!("FLAGS:\n\tTBD");
 }
