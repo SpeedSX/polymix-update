@@ -62,6 +62,7 @@ impl Updater<'_> {
                 print!("{}...", db_file.name);
                 match db_file.content {
                     Some(content) => {
+                        // TODO use write_all
                         fs::write(db_file.name, content)?;
                         println!("OK");
                     }

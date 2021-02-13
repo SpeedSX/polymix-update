@@ -16,7 +16,7 @@ async fn main() -> Result<(), Box<dyn Error>> {
 }
 
 async fn run() -> Result<(), Box<dyn Error>> {
-    println!("PolyMix Updater v1.0  (c) 2021 PolyMix Development Group.\nUse to work (update, download, etc.) with file images stored in database.\n");
+    println!("PolyMix Updater v0.1  (c) 2021 PolyMix Development Group.\nUse to work (update, download, etc.) with file images stored in database.\n");
     let args: Vec<_> = env::args().collect();
     if args.len() < 3 {
         print_usage();
@@ -48,7 +48,11 @@ async fn run() -> Result<(), Box<dyn Error>> {
 }
 
 fn print_usage() -> () {
-    println!("USAGE:\n\tpolymix-update [COMMAND] [mode] [FLAGS]\n");
-    println!("COMMANDS:\n\tupload\t\tWrite files from current directory to database\n\tdownload\tRead files from database and store in current directory\n");
+    println!("USAGE:
+    \tpolymix-update [COMMAND] [mode] [FLAGS]\n");
+    println!("COMMANDS:
+    \tupload\t\tWrite files from current directory to database
+    \tdownload\tRead files from database and store in current directory
+    \tlist\t\tlist files stored in database\n");
     println!("FLAGS:\n\tTBD");
 }
