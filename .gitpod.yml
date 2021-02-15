@@ -4,3 +4,12 @@ image:
 tasks:
   - init: cargo build
     command: cargo watch -x run
+  - name: Test
+    command: cargo test 
+
+vscode:
+  extensions:
+    - bungcip.better-toml@0.3.2:bHWX++/U0u3IDNSrnlEAeA==
+    - belfz.search-crates-io@1.2.1:7JPZg656GbRsrWJeg+vvrw==
+    - serayuzgur.crates@0.5.6:gG9tDW0adTWQ259qzYsd3w==
+    - matklad.rust-analyzer@0.2.473:QVH++KCVFXQpLRDxUIpk0g==
