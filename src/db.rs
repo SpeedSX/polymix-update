@@ -101,7 +101,7 @@ impl DB {
     fn try_map_db_file(row: &Row) -> Result<DBFile, Box<dyn Error>> {
         Ok(DBFile {
             name: Self::try_get_string(&row, "FileName").unwrap_or_default(),
-            date: row.try_get("FileDate")?.unwrap(), // TODO: this field is not nullable, so this should never fail, but it would be good to avoid unwrap
+            date: row.try_get("FileDate")?.unwrap_or_else(|| {unreachable!()}), // TODO: this field is not nullable, so this should never fail
             content: {
                 let data: Result<Option<&[u8]>, _> = row.try_get("FileImage");
                 //println!("{:?}", data);
