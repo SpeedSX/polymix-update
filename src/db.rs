@@ -1,3 +1,4 @@
+use tiberius::FromSql;
 use chrono::{DateTime, NaiveDateTime, Utc};
 use std::error::Error;
 use tiberius::{Client, Config};
@@ -101,7 +102,7 @@ impl DB {
     fn try_map_db_file(row: &Row) -> Result<DBFile, Box<dyn Error>> {
         Ok(DBFile {
             name: Self::try_get_string(&row, "FileName").unwrap_or_default(),
-            date: row.try_get("FileDate")?.unwrap_or_else(|| {unreachable!()}), // TODO: this field is not nullable, so this should never fail
+            date: Self::try_get_not_nullable(row, "FileDate")?, //row.try_get("FileDate")?.unwrap_or_else(|| {unreachable!()}), 
             content: {
                 let data: Result<Option<&[u8]>, _> = row.try_get("FileImage");
                 //println!("{:?}", data);
@@ -120,6 +121,11 @@ impl DB {
             .flatten()
         //.unwrap_or_default()
         //.map_or_else(|_| Some("".to_string()), |value| value.map(|s| s.to_string()))
+    }
+
+    // When field is not nullable, this should not fail in that case, only fail on conversion error
+    fn try_get_not_nullable<'a, R: FromSql<'a>>(row: &'a Row, col: &str) -> Result<R, Box<dyn Error>> {
+        Ok(row.try_get(col)?.unwrap_or_else(|| unreachable!()))
     }
 
     // fn try_get_date(row: &Row, col: &str) -> Option<NaiveDateTime> {
