@@ -3,19 +3,20 @@ mod config;
 mod db;
 mod updater;
 
-use std::{env, error::Error, process, str::FromStr};
+use std::{env, process, str::FromStr};
+use anyhow::Result;
 
 use command::Command;
 use config::get_config;
 use updater::Updater;
 
 #[tokio::main(flavor = "current_thread")]
-async fn main() -> Result<(), Box<dyn Error>> {
+async fn main() -> Result<()> {
     run().await?;
     Ok(())
 }
 
-async fn run() -> Result<(), Box<dyn Error>> {
+async fn run() -> Result<()> {
     println!("PolyMix Updater v0.1  (c) 2021 PolyMix Development Group.\nUse to work (update, download, etc.) with file images stored in database.\n");
     let args: Vec<_> = env::args().collect();
     if args.len() < 3 {

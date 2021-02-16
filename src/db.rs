@@ -1,6 +1,6 @@
+use anyhow::Result;
 use tiberius::FromSql;
 use chrono::{DateTime, NaiveDateTime, Utc};
-use std::error::Error;
 use tiberius::{Client, Config};
 use tiberius::{Row, SqlBrowser};
 use tokio::net::TcpStream;
@@ -19,7 +19,7 @@ pub struct DBFile {
 }
 
 impl DB {
-    pub async fn connect(connection_string: &str) -> Result<DB, Box<dyn Error>> {
+    pub async fn connect(connection_string: &str) -> Result<DB> {
         let config = Config::from_ado_string(&connection_string)?;
 
         let tcp = TcpStream::connect_named(&config).await?;
@@ -34,7 +34,7 @@ impl DB {
         &mut self,
         file_name: &str,
         file_date: DateTime<Utc>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<()> {
         print!("Adding new file...");
         self.client
             .execute(
@@ -51,7 +51,7 @@ impl DB {
         file_name: &str,
         file_date: DateTime<Utc>,
         content: Vec<u8>,
-    ) -> Result<(), Box<dyn Error>> {
+    ) -> Result<()> {
         print!("Uploading content...");
 
         self.client
@@ -66,7 +66,7 @@ impl DB {
         Ok(())
     }
 
-    pub async fn get_db_files(&mut self) -> Result<Vec<DBFile>, Box<dyn Error>> {
+    pub async fn get_db_files(&mut self) -> Result<Vec<DBFile>> {
         let rows = self
             .client
             .query("select FileName, FileDate from PolyCalcVersion", &[])
@@ -79,7 +79,7 @@ impl DB {
         Ok(result)
     }
 
-    pub async fn get_db_files_with_content(&mut self) -> Result<Vec<DBFile>, Box<dyn Error>> {
+    pub async fn get_db_files_with_content(&mut self) -> Result<Vec<DBFile>> {
         let rows = self
             .client
             .query(
@@ -95,11 +95,11 @@ impl DB {
         Ok(result)
     }
 
-    async fn map_db_files(rows: &[Row]) -> Result<Vec<DBFile>, Box<dyn Error>> {
+    async fn map_db_files(rows: &[Row]) -> Result<Vec<DBFile>> {
         rows.iter().map(Self::try_map_db_file).collect()
     }
 
-    fn try_map_db_file(row: &Row) -> Result<DBFile, Box<dyn Error>> {
+    fn try_map_db_file(row: &Row) -> Result<DBFile> {
         Ok(DBFile {
             name: Self::try_get_string(&row, "FileName").unwrap_or_default(),
             date: Self::try_get_not_nullable(row, "FileDate")?, //row.try_get("FileDate")?.unwrap_or_else(|| {unreachable!()}), 
@@ -124,7 +124,7 @@ impl DB {
     }
 
     // When field is not nullable, this should not fail in that case, only fail on conversion error
-    fn try_get_not_nullable<'a, R: FromSql<'a>>(row: &'a Row, col: &str) -> Result<R, Box<dyn Error>> {
+    fn try_get_not_nullable<'a, R: FromSql<'a>>(row: &'a Row, col: &str) -> Result<R> {
         Ok(row.try_get(col)?.unwrap_or_else(|| unreachable!()))
     }
 

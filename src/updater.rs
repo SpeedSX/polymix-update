@@ -1,6 +1,7 @@
+use std::{fs, process, time::SystemTime};
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use glob::{glob_with, MatchOptions, Pattern};
-use std::{error::Error, fs, process, time::SystemTime};
+use anyhow::Result;
 
 use crate::{command::Command, config::Config, db::DB};
 
@@ -19,7 +20,7 @@ impl Updater<'_> {
         }
     }
 
-    pub async fn run(&self) -> Result<(), Box<dyn Error>> {
+    pub async fn run(&self) -> Result<()> {
         match self.command {
             Command::Upload => self.upload().await?,
             Command::Download => self.download().await?,
@@ -28,7 +29,7 @@ impl Updater<'_> {
         Ok(())
     }
 
-    async fn upload(&self) -> Result<(), Box<dyn Error>> {
+    async fn upload(&self) -> Result<()> {
         match self.get_file_mask() {
             Some(pattern) => self.upload_files(&pattern).await?,
             None => {
@@ -39,7 +40,7 @@ impl Updater<'_> {
         Ok(())
     }
 
-    async fn download(&self) -> Result<(), Box<dyn Error>> {
+    async fn download(&self) -> Result<()> {
         match self.get_file_mask() {
             Some(pattern) => self.download_files(&pattern).await?,
             None => {
@@ -50,7 +51,7 @@ impl Updater<'_> {
         Ok(())
     }
 
-    async fn list(&self) -> Result<(), Box<dyn Error>> {
+    async fn list(&self) -> Result<()> {
         match self.get_file_mask() {
             Some(pattern) => self.list_files(&pattern).await?,
             None => {
@@ -61,7 +62,7 @@ impl Updater<'_> {
         Ok(())
     }
 
-    async fn download_files(&self, pattern_str: &str) -> Result<(), Box<dyn Error>> {
+    async fn download_files(&self, pattern_str: &str) -> Result<()> {
         let mut client = self.connect().await?;
 
         println!("Downloading files..."); // TODO do not download all files
@@ -85,7 +86,7 @@ impl Updater<'_> {
         Ok(())
     }
 
-    async fn upload_files(&self, pattern_str: &str) -> Result<(), Box<dyn Error>> {
+    async fn upload_files(&self, pattern_str: &str) -> Result<()> {
         let mut client = self.connect().await?;
 
         let db_files: Vec<String> = client
@@ -103,35 +104,36 @@ impl Updater<'_> {
         for entry in glob_with(pattern_str, options)? {
             let path = entry?;
 
-            let metadata = fs::metadata(&path)?;
-            let last_modified = metadata.modified()?;
+            if let Some(file_name) = path.file_name().map(|f| f.to_string_lossy()) {
 
-            let file_name = path.file_name().map(|f| f.to_string_lossy()).ok_or("-")?;
+                let metadata = fs::metadata(&path)?;
+                let last_modified = metadata.modified()?;
 
-            if metadata.is_file() {
-                println!(
-                    "{}: Last modified {}, size {} bytes",
-                    file_name,
-                    Self::format_date_time(last_modified),
-                    metadata.len(),
-                );
+                if metadata.is_file() {
+                    println!(
+                        "{}: Last modified {}, size {} bytes",
+                        file_name,
+                        Self::format_date_time(last_modified),
+                        metadata.len(),
+                    );
+                }
+
+                let content = fs::read(&path)?;
+                let file_name: &String = &file_name.into();
+                let file_date: DateTime<Utc> = last_modified.into();
+                if !db_files.contains(file_name) {
+                    client.insert_file_name(file_name, file_date).await?;
+                }
+                client
+                    .upload_file_content(file_name, file_date, content)
+                    .await?;
             }
-
-            let content = fs::read(&path)?;
-            let file_name: &String = &file_name.into();
-            let file_date: DateTime<Utc> = last_modified.into();
-            if !db_files.contains(file_name) {
-                client.insert_file_name(file_name, file_date).await?;
-            }
-            client
-                .upload_file_content(file_name, file_date, content)
-                .await?;
         }
 
         Ok(())
     }
 
-    async fn list_files(&self, pattern_str: &str) -> Result<(), Box<dyn Error>> {
+    async fn list_files(&self, pattern_str: &str) -> Result<()> {
         let mut client = self.connect().await?;
 
         //println!("Reading file list...");
@@ -174,7 +176,7 @@ impl Updater<'_> {
         }
     }
 
-    async fn connect(&self) -> Result<DB, Box<dyn Error>> {
+    async fn connect(&self) -> Result<DB> {
         Ok(DB::connect(self.config.connection_string.as_str()).await?)
     }
 
