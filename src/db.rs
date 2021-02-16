@@ -102,7 +102,7 @@ impl DB {
     fn try_map_db_file(row: &Row) -> Result<DBFile> {
         Ok(DBFile {
             name: Self::try_get_string(&row, "FileName").unwrap_or_default(),
-            date: Self::try_get_not_nullable(row, "FileDate")?, //row.try_get("FileDate")?.unwrap_or_else(|| {unreachable!()}),
+            date: Self::try_get_not_nullable(row, "FileDate")?, 
             content: Self::try_get_binary(&row, "FileImage")?,
         })
     }
