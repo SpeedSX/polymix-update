@@ -1,6 +1,6 @@
 use anyhow::Result;
-use tiberius::FromSql;
 use chrono::{DateTime, NaiveDateTime, Utc};
+use tiberius::FromSql;
 use tiberius::{Client, Config};
 use tiberius::{Row, SqlBrowser};
 use tokio::net::TcpStream;
@@ -102,20 +102,14 @@ impl DB {
     fn try_map_db_file(row: &Row) -> Result<DBFile> {
         Ok(DBFile {
             name: Self::try_get_string(&row, "FileName").unwrap_or_default(),
-            date: Self::try_get_not_nullable(row, "FileDate")?, //row.try_get("FileDate")?.unwrap_or_else(|| {unreachable!()}), 
-            content: {
-                let data: Result<Option<&[u8]>, _> = row.try_get("FileImage");
-                //println!("{:?}", data);
-                let data = data.unwrap_or_default();
-                //data.take() TODO
-                data.map(|d| d.into())
-            },
+            date: Self::try_get_not_nullable(row, "FileDate")?, //row.try_get("FileDate")?.unwrap_or_else(|| {unreachable!()}),
+            content: Self::try_get_binary(&row, "FileImage")?,
         })
     }
 
     fn try_get_string(row: &Row, col: &str) -> Option<String> {
         // Error values are converted to empty strings
-        row.try_get::<&str, &str>(col)
+        row.try_get::<&str, _>(col)
             .map(|value| value.map(|s| s.to_string()))
             .ok()
             .flatten()
@@ -128,7 +122,8 @@ impl DB {
         Ok(row.try_get(col)?.unwrap_or_else(|| unreachable!()))
     }
 
-    // fn try_get_date(row: &Row, col: &str) -> Option<NaiveDateTime> {
-    //     row.try_get::<NaiveDateTime, &str>(col).ok().flatten()
-    // }
+    fn try_get_binary(row: &Row, col: &str) -> Result<Option<Vec<u8>>> {
+        let data = row.try_get::<&[u8], _>(col)?;
+        Ok(data.map(|d| d.into()))
+    }
 }

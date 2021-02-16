@@ -3,8 +3,8 @@ mod config;
 mod db;
 mod updater;
 
-use std::{env, process, str::FromStr};
 use anyhow::Result;
+use std::{env, process, str::FromStr};
 
 use command::Command;
 use config::get_config;

@@ -1,8 +1,8 @@
+use anyhow::Result;
+use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
-use std::{path::Path};
-use serde::{Deserialize, Serialize};
-use anyhow::Result;
+use std::path::Path;
 
 #[derive(Serialize, Deserialize)]
 pub struct UpdateMode {

@@ -1,7 +1,7 @@
-use std::{fs, process, time::SystemTime};
+use anyhow::Result;
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use glob::{glob_with, MatchOptions, Pattern};
-use anyhow::Result;
+use std::{fs, process, time::SystemTime};
 
 use crate::{command::Command, config::Config, db::DB};
 
@@ -105,7 +105,6 @@ impl Updater<'_> {
             let path = entry?;
 
             if let Some(file_name) = path.file_name().map(|f| f.to_string_lossy()) {
-
                 let metadata = fs::metadata(&path)?;
                 let last_modified = metadata.modified()?;
 
