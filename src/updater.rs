@@ -127,6 +127,8 @@ impl Updater<'_> {
                 client
                     .upload_file_content(file_name, file_date, content)
                     .await?;
+            } else {
+                println!("filename is not valid, skipped");
             }
         }
 
