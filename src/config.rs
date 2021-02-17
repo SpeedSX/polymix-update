@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{Result, Context};
 use serde::{Deserialize, Serialize};
 use std::fs::File;
 use std::io::BufReader;
@@ -19,7 +19,7 @@ pub struct Config {
 }
 
 pub fn get_config<P: AsRef<Path>>(path: P) -> Result<Config> {
-    let file = File::open(path)?;
+    let file = File::open(path.as_ref()).with_context(|| format!("Failed to open config file {}", path.as_ref().display()))?;
     let reader = BufReader::new(file);
     let config = serde_json::from_reader(reader)?;
     Ok(config)
