@@ -141,16 +141,23 @@ impl Updater<'_> {
 
         let db_files = client.get_db_files().await?;
 
+        println!();
+
+        let mut match_count = 1;
+        let pattern = Pattern::new(pattern_str)?;
+
         for db_file in db_files {
-            let pattern = Pattern::new(pattern_str)?;
             if pattern.matches(db_file.name.as_str()) {
-                print!(
+                println!(
                     "{}\t{}",
                     db_file.name,
                     Self::format_db_date_time(db_file.date)
                 );
+                match_count += 1;
             }
         }
+
+        println!("\n{} file(s)", match_count);
 
         Ok(())
     }

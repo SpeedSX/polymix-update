@@ -22,6 +22,8 @@ impl DB {
     pub async fn connect(connection_string: &str) -> Result<DB> {
         let config = Config::from_ado_string(&connection_string)?;
 
+        println!("Connecting to server {}", config.get_addr());
+
         let tcp = TcpStream::connect_named(&config).await?;
         tcp.set_nodelay(true)?;
 
@@ -102,8 +104,8 @@ impl DB {
     fn try_map_db_file(row: &Row) -> Result<DBFile> {
         Ok(DBFile {
             name: Self::try_get_string(&row, "FileName").unwrap_or_default(),
-            date: Self::try_get_not_nullable(row, "FileDate")?, 
-            content: Self::try_get_binary(&row, "FileImage")?,
+            date: Self::try_get_not_nullable(row, "FileDate")?,
+            content: Self::try_get_binary(&row, "FileImage").unwrap_or_default(), // this field is not always in result set
         })
     }
 
