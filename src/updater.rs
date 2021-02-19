@@ -29,40 +29,34 @@ impl Updater<'_> {
         Ok(())
     }
 
-    async fn upload(&self) -> Result<()> {
+    async fn process_files<'a, F, Fut>(&'a self, process_fn: F) -> Result<()>
+    where
+        F: FnOnce(&'a Self, String) -> Fut,
+        Fut: std::future::Future<Output = Result<()>> + 'a,
+    {
         match self.get_file_mask() {
-            Some(pattern) => self.upload_files(&pattern).await?,
+            Some(pattern) => process_fn(self, pattern).await?,
             None => {
                 // TODO: we do not handle default file masks at the moment
                 process::exit(1)
             }
         }
         Ok(())
+    }
+
+    async fn upload(&self) -> Result<()> {
+        self.process_files(Self::upload_files).await
     }
 
     async fn download(&self) -> Result<()> {
-        match self.get_file_mask() {
-            Some(pattern) => self.download_files(&pattern).await?,
-            None => {
-                // TODO: we do not handle default file masks at the moment
-                process::exit(1)
-            }
-        }
-        Ok(())
+        self.process_files(Self::download_files).await
     }
 
     async fn list(&self) -> Result<()> {
-        match self.get_file_mask() {
-            Some(pattern) => self.list_files(&pattern).await?,
-            None => {
-                // TODO: we do not handle default file masks at the moment
-                process::exit(1)
-            }
-        }
-        Ok(())
+        self.process_files(Self::list_files).await
     }
 
-    async fn download_files(&self, pattern_str: &str) -> Result<()> {
+    async fn download_files(&self, pattern_str: String) -> Result<()> {
         let mut client = self.connect().await?;
 
         println!("Downloading files..."); // TODO do not download all files
@@ -70,7 +64,7 @@ impl Updater<'_> {
         let db_files = client.get_db_files_with_content().await?;
 
         for db_file in db_files {
-            let pattern = Pattern::new(pattern_str)?;
+            let pattern = Pattern::new(&pattern_str)?;
             if pattern.matches(db_file.name.as_str()) {
                 print!("{}...", db_file.name);
                 match db_file.content {
@@ -86,7 +80,7 @@ impl Updater<'_> {
         Ok(())
     }
 
-    async fn upload_files(&self, pattern_str: &str) -> Result<()> {
+    async fn upload_files(&self, pattern_str: String) -> Result<()> {
         let mut client = self.connect().await?;
 
         let db_files: Vec<String> = client
@@ -101,7 +95,7 @@ impl Updater<'_> {
             require_literal_separator: false,
             require_literal_leading_dot: false,
         };
-        for entry in glob_with(pattern_str, options)? {
+        for entry in glob_with(&pattern_str, options)? {
             let path = entry?;
 
             if let Some(file_name) = path.file_name().map(|f| f.to_string_lossy()) {
@@ -134,7 +128,7 @@ impl Updater<'_> {
         Ok(())
     }
 
-    async fn list_files(&self, pattern_str: &str) -> Result<()> {
+    async fn list_files(&self, pattern_str: String) -> Result<()> {
         let mut client = self.connect().await?;
 
         //println!("Reading file list...");
@@ -144,7 +138,7 @@ impl Updater<'_> {
         println!();
 
         let mut match_count = 1;
-        let pattern = Pattern::new(pattern_str)?;
+        let pattern = Pattern::new(&pattern_str)?;
 
         for db_file in db_files {
             if pattern.matches(db_file.name.as_str()) {
