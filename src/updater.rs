@@ -131,13 +131,13 @@ impl Updater<'_> {
 
             let content = fs::read(&path)?;
             let file_date: DateTime<Utc> = last_modified.into();
-            if !db_files.contains(&file_name) {
+            if db_files.contains(&file_name) {
                 client
-                    .insert_file_with_content(&file_name, file_date, &content)
+                    .update_file_content(&file_name, file_date, &content)
                     .await?;
             } else {
                 client
-                    .update_file_content(&file_name, file_date, &content)
+                    .insert_file_with_content(&file_name, file_date, &content)
                     .await?;
             }
         }
