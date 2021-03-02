@@ -90,7 +90,7 @@ impl Updater<'_> {
         //     .split(';')
         //     .map(|pattern| glob_with(pattern, options))
         //     .collect();
-        
+
         let mut paths: Vec<PathBuf> = vec![];
         for pattern in pattern_str.split(';') {
             for entry in glob_with(pattern, options)? {
@@ -100,6 +100,8 @@ impl Updater<'_> {
                 }
             }
         }
+
+        paths.dedup();
 
         Ok(paths)
     }
