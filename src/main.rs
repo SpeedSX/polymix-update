@@ -17,7 +17,7 @@ async fn main() -> Result<()> {
 }
 
 async fn run() -> Result<()> {
-    println!("PolyMix Updater v0.1  (c) 2021 PolyMix Development Group.\nUse to work (update, download, etc.) with file images stored in database.\n");
+    println!("PolyMix Updater v0.2  (c) 2021 PolyMix Development Group.\nUse to work (update, download, etc.) with file images stored in database.\n");
     let args: Vec<_> = env::args().collect();
     if args.len() < 3 {
         print_usage();

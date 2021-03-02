@@ -32,29 +32,33 @@ impl DB {
         Ok(DB { client })
     }
 
-    pub async fn insert_file_name(
+    pub async fn insert_file_with_content(
         &mut self,
         file_name: &str,
         file_date: DateTime<Utc>,
+        content: &[u8],
     ) -> Result<()> {
         print!("Adding new file...");
+
         self.client
             .execute(
-                "INSERT INTO PolyCalcVersion (FileName, FileDate) VALUES (@P1, @P2)",
-                &[&file_name, &file_date],
+                "INSERT INTO PolyCalcVersion (FileName, FileDate, FileImage) VALUES (@P1, @P2, @P3)",
+                &[&file_name, &file_date, &content],
             )
             .await?;
+
         println!("OK");
+
         Ok(())
     }
 
-    pub async fn upload_file_content(
+    pub async fn update_file_content(
         &mut self,
         file_name: &str,
         file_date: DateTime<Utc>,
-        content: Vec<u8>,
+        content: &[u8],
     ) -> Result<()> {
-        print!("Uploading content...");
+        print!("Updating file content...");
 
         self.client
             .execute(

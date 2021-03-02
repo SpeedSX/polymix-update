@@ -1,7 +1,7 @@
 use anyhow::Result;
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use glob::{glob_with, MatchOptions, Pattern};
-use std::{fs, process, time::SystemTime};
+use std::{fs, path::PathBuf, process, time::SystemTime};
 
 use crate::{command::Command, config::Config, db::DB};
 
@@ -80,7 +80,32 @@ impl Updater<'_> {
         Ok(())
     }
 
+    fn get_local_files(pattern_str: &str) -> Result<Vec<PathBuf>> {
+        let options = MatchOptions {
+            case_sensitive: false,
+            require_literal_separator: false,
+            require_literal_leading_dot: false,
+        };
+        //pattern_str.split(';').map(|pattern| glob_with(pattern, options).and_then(|paths| paths.iter().map(|entry| )}).flatten()
+        let mut result: Vec<PathBuf> = vec![];
+        for pattern in pattern_str.split(';') {
+            for entry in glob_with(pattern, options)? {
+                let path = entry?;
+                if let Some(_) = path.file_name() {
+                    result.push(path);
+                }
+            }
+        }
+
+        Ok(result)
+    }
+
     async fn upload_files(&self, pattern_str: String) -> Result<()> {
+        let local_files = Self::get_local_files(&pattern_str)?;
+        if local_files.is_empty() {
+            return Ok(());
+        }
+
         let mut client = self.connect().await?;
 
         let db_files: Vec<String> = client
@@ -90,38 +115,30 @@ impl Updater<'_> {
             .map(|f| f.name.clone())
             .collect();
 
-        let options = MatchOptions {
-            case_sensitive: false,
-            require_literal_separator: false,
-            require_literal_leading_dot: false,
-        };
-        for entry in glob_with(&pattern_str, options)? {
-            let path = entry?;
+        for path in local_files {
+            let file_name: String = path.to_string_lossy().into();
+            let metadata = fs::metadata(&path)?;
+            let last_modified = metadata.modified()?;
 
-            if let Some(file_name) = path.file_name().map(|f| f.to_string_lossy()) {
-                let metadata = fs::metadata(&path)?;
-                let last_modified = metadata.modified()?;
+            if metadata.is_file() {
+                println!(
+                    "{}: Last modified {}, size {} bytes",
+                    file_name,
+                    Self::format_date_time(last_modified),
+                    metadata.len(),
+                );
+            }
 
-                if metadata.is_file() {
-                    println!(
-                        "{}: Last modified {}, size {} bytes",
-                        file_name,
-                        Self::format_date_time(last_modified),
-                        metadata.len(),
-                    );
-                }
-
-                let content = fs::read(&path)?;
-                let file_name: &String = &file_name.into();
-                let file_date: DateTime<Utc> = last_modified.into();
-                if !db_files.contains(file_name) {
-                    client.insert_file_name(file_name, file_date).await?;
-                }
+            let content = fs::read(&path)?;
+            let file_date: DateTime<Utc> = last_modified.into();
+            if !db_files.contains(&file_name) {
                 client
-                    .upload_file_content(file_name, file_date, content)
+                    .insert_file_with_content(&file_name, file_date, &content)
                     .await?;
             } else {
-                println!("filename is not valid, skipped");
+                client
+                    .update_file_content(&file_name, file_date, &content)
+                    .await?;
             }
         }
 
@@ -131,13 +148,11 @@ impl Updater<'_> {
     async fn list_files(&self, pattern_str: String) -> Result<()> {
         let mut client = self.connect().await?;
 
-        //println!("Reading file list...");
-
         let db_files = client.get_db_files().await?;
 
         println!();
 
-        let mut match_count = 1;
+        let mut match_count = 0;
         let pattern = Pattern::new(&pattern_str)?;
 
         for db_file in db_files {
