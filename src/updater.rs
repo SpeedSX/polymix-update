@@ -86,10 +86,16 @@ impl Updater<'_> {
             require_literal_separator: false,
             require_literal_leading_dot: false,
         };
-        // let paths: Result<Vec<_>> = pattern_str
+        // let pattern_paths = pattern_str
         //     .split(';')
         //     .map(|pattern| glob_with(pattern, options))
-        //     .collect();
+        //     .collect::<Result<Vec<_>, _>>()?;
+
+        // let paths = pattern_paths
+        //     .into_iter()
+        //     .map(|paths| paths.into_iter())
+        //     .flatten()
+        //     .collect::<Result<Vec<_>, _>>()?;
 
         let mut paths: Vec<PathBuf> = vec![];
         for pattern in pattern_str.split(';') {
@@ -158,11 +164,14 @@ impl Updater<'_> {
 
         println!();
 
-        let mut match_count = 0;
-        let pattern = Pattern::new(&pattern_str)?;
+        let patterns = pattern_str
+            .split(';')
+            .map(|pattern| Pattern::new(pattern))
+            .collect::<Result<Vec<_>, _>>()?;
 
+        let mut match_count = 0;
         for db_file in db_files {
-            if pattern.matches(db_file.name.as_str()) {
+            if patterns.iter().any(|pattern| pattern.matches(db_file.name.as_str())) {
                 println!(
                     "{}\t{}",
                     db_file.name,
