@@ -86,18 +86,22 @@ impl Updater<'_> {
             require_literal_separator: false,
             require_literal_leading_dot: false,
         };
-        //pattern_str.split(';').map(|pattern| glob_with(pattern, options).and_then(|paths| paths.iter().map(|entry| )}).flatten()
-        let mut result: Vec<PathBuf> = vec![];
+        // let paths: Result<Vec<_>> = pattern_str
+        //     .split(';')
+        //     .map(|pattern| glob_with(pattern, options))
+        //     .collect();
+        
+        let mut paths: Vec<PathBuf> = vec![];
         for pattern in pattern_str.split(';') {
             for entry in glob_with(pattern, options)? {
                 let path = entry?;
                 if let Some(_) = path.file_name() {
-                    result.push(path);
+                    paths.push(path);
                 }
             }
         }
 
-        Ok(result)
+        Ok(paths)
     }
 
     async fn upload_files(&self, pattern_str: String) -> Result<()> {
