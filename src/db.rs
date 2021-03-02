@@ -1,4 +1,4 @@
-use anyhow::Result;
+use anyhow::{bail, Result};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use tiberius::FromSql;
 use tiberius::{Client, Config};
@@ -99,6 +99,27 @@ impl DB {
         let result = Self::map_db_files(&rows).await?;
 
         Ok(result)
+    }
+
+    pub async fn get_db_file_content(&mut self, file_name: &str) -> Result<Option<Vec<u8>>> {
+        let rows = self
+            .client
+            .query(
+                "select FileImage from PolyCalcVersion where FileName = @P1",
+                &[&file_name],
+            )
+            .await?
+            .into_first_result()
+            .await?;
+
+        if let Some(content) = rows
+            .first()
+            .map(|row| Self::try_get_binary(row, "FileImage"))
+        {
+            content
+        } else {
+            bail!("File not found: {}", file_name)
+        }
     }
 
     async fn map_db_files(rows: &[Row]) -> Result<Vec<DBFile>> {

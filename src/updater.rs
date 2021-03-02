@@ -65,19 +65,17 @@ impl Updater<'_> {
 
         println!("Downloading files..."); // TODO do not download all files
 
-        let db_files = client.get_db_files_with_content().await?;
+        let db_files = Self::get_matched_db_files(&mut client, &pattern_str).await?;
 
         for db_file in db_files {
-            let pattern = Pattern::new(&pattern_str)?;
-            if pattern.matches(db_file.name.as_str()) {
-                print!("{}...", db_file.name);
-                match db_file.content {
-                    Some(content) => {
-                        fs::write(db_file.name, content)?;
-                        println!("OK");
-                    }
-                    None => println!("Zero length, skipped"),
+            print!("{}...", db_file.name);
+            let content = client.get_db_file_content(&db_file.name).await?;
+            match content {
+                Some(content) => {
+                    fs::write(db_file.name, content)?;
+                    println!("OK");
                 }
+                None => println!("Zero length, skipped"),
             }
         }
 
