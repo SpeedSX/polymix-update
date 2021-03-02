@@ -3,7 +3,11 @@ use chrono::{DateTime, Local, NaiveDateTime, Utc};
 use glob::{glob_with, MatchOptions, Pattern};
 use std::{fs, path::PathBuf, process, time::SystemTime};
 
-use crate::{command::Command, config::Config, db::DB};
+use crate::{
+    command::Command,
+    config::Config,
+    db::{DBFile, DB},
+};
 
 pub struct Updater<'a> {
     config: &'a Config,
@@ -160,30 +164,42 @@ impl Updater<'_> {
     async fn list_files(&self, pattern_str: String) -> Result<()> {
         let mut client = self.connect().await?;
 
-        let db_files = client.get_db_files().await?;
+        let db_files = Self::get_matched_db_files(&mut client, &pattern_str).await?;
 
         println!();
 
+        for db_file in db_files.iter() {
+            println!(
+                "{}\t{}",
+                db_file.name,
+                Self::format_db_date_time(db_file.date)
+            );
+        }
+
+        println!("\n{} file(s)", db_files.len());
+
+        Ok(())
+    }
+
+    // Choose only DB files which match any of the patterns
+    async fn get_matched_db_files(client: &mut DB, pattern_str: &str) -> Result<Vec<DBFile>> {
         let patterns = pattern_str
             .split(';')
             .map(|pattern| Pattern::new(pattern))
             .collect::<Result<Vec<_>, _>>()?;
 
-        let mut match_count = 0;
-        for db_file in db_files {
-            if patterns.iter().any(|pattern| pattern.matches(db_file.name.as_str())) {
-                println!(
-                    "{}\t{}",
-                    db_file.name,
-                    Self::format_db_date_time(db_file.date)
-                );
-                match_count += 1;
-            }
-        }
+        let db_files = client.get_db_files().await?;
 
-        println!("\n{} file(s)", match_count);
+        let db_files: Vec<DBFile> = db_files
+            .into_iter()
+            .filter(|db_file| {
+                patterns
+                    .iter()
+                    .any(|pattern| pattern.matches(db_file.name.as_str()))
+            })
+            .collect();
 
-        Ok(())
+        Ok(db_files)
     }
 
     fn get_file_mask(&self) -> Option<String> {
