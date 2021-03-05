@@ -1,4 +1,4 @@
-use anyhow::{bail, Result};
+use anyhow::{anyhow, Result};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use tiberius::FromSql;
 use tiberius::{Client, Config};
@@ -85,41 +85,34 @@ impl DB {
         Ok(result)
     }
 
-    pub async fn get_db_files_with_content(&mut self) -> Result<Vec<DBFile>> {
-        let rows = self
-            .client
-            .query(
-                "select FileName, FileDate, FileImage from PolyCalcVersion",
-                &[],
-            )
-            .await?
-            .into_first_result()
-            .await?;
+    // pub async fn get_db_files_with_content(&mut self) -> Result<Vec<DBFile>> {
+    //     let rows = self
+    //         .client
+    //         .query(
+    //             "select FileName, FileDate, FileImage from PolyCalcVersion",
+    //             &[],
+    //         )
+    //         .await?
+    //         .into_first_result()
+    //         .await?;
 
-        let result = Self::map_db_files(&rows).await?;
+    //     let result = Self::map_db_files(&rows).await?;
 
-        Ok(result)
-    }
+    //     Ok(result)
+    // }
 
     pub async fn get_db_file_content(&mut self, file_name: &str) -> Result<Option<Vec<u8>>> {
-        let rows = self
-            .client
+        self.client
             .query(
                 "select FileImage from PolyCalcVersion where FileName = @P1",
                 &[&file_name],
             )
             .await?
             .into_first_result()
-            .await?;
-
-        if let Some(content) = rows
+            .await?
             .first()
-            .map(|row| Self::try_get_binary(row, "FileImage"))
-        {
-            content
-        } else {
-            bail!("File not found: {}", file_name)
-        }
+            .ok_or(anyhow!("File not found: {}", file_name))
+            .and_then(|row| Self::try_get_binary(row, "FileImage"))
     }
 
     async fn map_db_files(rows: &[Row]) -> Result<Vec<DBFile>> {
@@ -140,13 +133,12 @@ impl DB {
             .map(|value| value.map(|s| s.to_string()))
             .ok()
             .flatten()
-        //.unwrap_or_default()
-        //.map_or_else(|_| Some("".to_string()), |value| value.map(|s| s.to_string()))
     }
 
-    // When field is not nullable, this should not fail in that case, only fail on conversion error
+    // Tries to unwrap value of not-nullable field, returns error when finds unexpected null
     fn try_get_not_nullable<'a, R: FromSql<'a>>(row: &'a Row, col: &str) -> Result<R> {
-        Ok(row.try_get(col)?.unwrap_or_else(|| unreachable!()))
+        row.try_get(col)?
+            .ok_or(anyhow!("Null value not expected in column {}", col))
     }
 
     fn try_get_binary(row: &Row, col: &str) -> Result<Option<Vec<u8>>> {
