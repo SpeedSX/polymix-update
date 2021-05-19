@@ -103,7 +103,7 @@ impl Updater<'_> {
         for pattern in pattern_str.split(';') {
             for entry in glob_with(pattern, options)? {
                 let path = entry?;
-                if let Some(_) = path.file_name() {
+                if path.file_name().is_some() {
                     paths.push(path);
                 }
             }

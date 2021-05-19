@@ -111,7 +111,7 @@ impl DB {
             .into_first_result()
             .await?
             .first()
-            .ok_or(anyhow!("File not found: {}", file_name))
+            .ok_or_else(|| anyhow!("File not found: {}", file_name))
             .and_then(|row| Self::try_get_binary(row, "FileImage"))
     }
 
@@ -138,7 +138,7 @@ impl DB {
     // Tries to unwrap value of not-nullable field, returns error when finds unexpected null
     fn try_get_not_nullable<'a, R: FromSql<'a>>(row: &'a Row, col: &str) -> Result<R> {
         row.try_get(col)?
-            .ok_or(anyhow!("Null value not expected in column {}", col))
+            .ok_or_else(|| anyhow!("Null value not expected in column {}", col))
     }
 
     fn try_get_binary(row: &Row, col: &str) -> Result<Option<Vec<u8>>> {
