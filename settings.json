@@ -1,5 +1,5 @@
 {
-    "connection_string": "server=tcp:localhost,1433;TrustServerCertificate=true;User=sa;Password=sas;Database=Consum",
+    "connection_string": "server=tcp:localhost\\SQLEXPRESS;TrustServerCertificate=true;User=sa;Password=sas;Database=Consum",
     "update_mode": [
         {
             "name": "exe",
