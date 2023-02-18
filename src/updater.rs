@@ -183,7 +183,7 @@ impl Updater<'_> {
     async fn get_matched_db_files(client: &mut DB, pattern_str: &str) -> Result<Vec<DBFile>> {
         let patterns = pattern_str
             .split(';')
-            .map(|pattern| Pattern::new(pattern))
+            .map(Pattern::new)
             .collect::<Result<Vec<_>, _>>()?;
 
         let db_files = client.get_db_files().await?;
@@ -201,29 +201,23 @@ impl Updater<'_> {
     }
 
     fn get_file_mask(&self) -> Option<String> {
-        let update_mode = self.update_mode_name.to_lowercase();
         // TODO  Default mode is not implemented
-        let update_mode = self
-            .config
+        self.config
             .update_mode
             .iter()
-            .find(|mode| mode.name.to_lowercase() == update_mode);
-
-        // TODO Use map
-        match update_mode {
-            Some(mode) => Some(mode.file_mask.to_owned()),
-            None => {
+            .find(|mode| mode.name.eq_ignore_ascii_case(&self.update_mode_name))
+            .map(|mode| mode.file_mask.to_owned())
+            .or_else(|| {
                 println!(
                     "'{}' update mode not found in configuration file",
                     self.update_mode_name
                 );
                 None
-            }
-        }
+            })
     }
 
     async fn connect(&self) -> Result<DB> {
-        Ok(DB::connect(self.config.connection_string.as_str()).await?)
+        DB::connect(self.config.connection_string.as_str()).await
     }
 
     fn format_date_time(system_time: SystemTime) -> String {
