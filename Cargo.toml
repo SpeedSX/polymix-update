@@ -15,8 +15,8 @@ tokio-util = { version = "0.7", features = ["compat"] }
 glob = "0.3"
 chrono = "0.4"
 anyhow = "1"
-strum = "^0.24"
-strum_macros = "^0.24"
+strum = "^0.25"
+strum_macros = "^0.25"
 
 [profile.release]
 opt-level="s"

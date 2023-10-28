@@ -34,12 +34,30 @@ mod tests {
 
     #[test]
     fn test_from_str_case_insensitive() {
-        assert_eq!(Command::from_str_case_insensitive("Upload"), Ok(Command::Upload));
-        assert_eq!(Command::from_str_case_insensitive("upload"), Ok(Command::Upload));
-        assert_eq!(Command::from_str_case_insensitive("Download"), Ok(Command::Download));
-        assert_eq!(Command::from_str_case_insensitive("download"), Ok(Command::Download));
-        assert_eq!(Command::from_str_case_insensitive("List"), Ok(Command::List));
-        assert_eq!(Command::from_str_case_insensitive("list"), Ok(Command::List));
+        assert_eq!(
+            Command::from_str_case_insensitive("Upload"),
+            Ok(Command::Upload)
+        );
+        assert_eq!(
+            Command::from_str_case_insensitive("upload"),
+            Ok(Command::Upload)
+        );
+        assert_eq!(
+            Command::from_str_case_insensitive("Download"),
+            Ok(Command::Download)
+        );
+        assert_eq!(
+            Command::from_str_case_insensitive("download"),
+            Ok(Command::Download)
+        );
+        assert_eq!(
+            Command::from_str_case_insensitive("List"),
+            Ok(Command::List)
+        );
+        assert_eq!(
+            Command::from_str_case_insensitive("list"),
+            Ok(Command::List)
+        );
         assert_eq!(Command::from_str_case_insensitive("invalid"), Err(()));
     }
 }
