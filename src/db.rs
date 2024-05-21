@@ -80,7 +80,7 @@ impl DB {
             .into_first_result()
             .await?;
 
-        let result = Self::map_db_files(&rows).await?;
+        let result = Self::map_db_files(&rows)?;
 
         Ok(result)
     }
@@ -115,7 +115,7 @@ impl DB {
             .and_then(|row| Self::try_get_binary(row, "FileImage"))
     }
 
-    async fn map_db_files(rows: &[Row]) -> Result<Vec<DBFile>> {
+    fn map_db_files(rows: &[Row]) -> Result<Vec<DBFile>> {
         rows.iter().map(Self::try_map_db_file).collect()
     }
 
@@ -130,7 +130,7 @@ impl DB {
     fn try_get_string(row: &Row, col: &str) -> Option<String> {
         // Error values are converted to empty strings
         row.try_get::<&str, _>(col)
-            .map(|value| value.map(|s| s.to_string()))
+            .map(|value| value.map(ToString::to_string))
             .ok()
             .flatten()
     }
@@ -143,6 +143,6 @@ impl DB {
 
     fn try_get_binary(row: &Row, col: &str) -> Result<Option<Vec<u8>>> {
         let data = row.try_get::<&[u8], _>(col)?;
-        Ok(data.map(|d| d.into()))
+        Ok(data.map(Into::into))
     }
 }

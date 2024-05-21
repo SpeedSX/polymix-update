@@ -166,7 +166,7 @@ impl Updater<'_> {
 
         println!();
 
-        for db_file in db_files.iter() {
+        for db_file in &db_files {
             println!(
                 "{}\t{}",
                 db_file.name,
@@ -206,7 +206,7 @@ impl Updater<'_> {
             .update_mode
             .iter()
             .find(|mode| mode.name.eq_ignore_ascii_case(&self.update_mode_name))
-            .map(|mode| mode.file_mask.to_owned())
+            .map(|mode| mode.file_mask.clone())
             .or_else(|| {
                 println!(
                     "'{}' update mode not found in configuration file",

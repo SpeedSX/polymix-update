@@ -7,7 +7,7 @@ use anyhow::Result;
 use std::{env, process, str::FromStr};
 
 use command::Command;
-use config::get_config;
+use config::get;
 use updater::Updater;
 
 #[tokio::main(flavor = "current_thread")]
@@ -25,22 +25,19 @@ async fn run() -> Result<()> {
     } else {
         // try parsing command
         let command = Command::from_str(&args[1]);
-        match command {
-            Ok(command) => {
-                // try reading configuration
-                let config = get_config("settings.json");
-                match config {
-                    Ok(config) => Updater::new(&config, command, &args[2]).run().await?,
-                    Err(error) => {
-                        println!("{}", error);
-                        process::exit(2);
-                    }
+        if let Ok(command) = command {
+            // try reading configuration
+            let config = get("settings.json");
+            match config {
+                Ok(config) => Updater::new(&config, command, &args[2]).run().await?,
+                Err(error) => {
+                    println!("{error}");
+                    process::exit(2);
                 }
             }
-            Err(_) => {
-                print_usage();
-                process::exit(1);
-            }
+        } else {
+            print_usage();
+            process::exit(1);
         }
     }
 

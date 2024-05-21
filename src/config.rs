@@ -18,7 +18,7 @@ pub struct Config {
     pub update_mode: Vec<UpdateMode>,
 }
 
-pub fn get_config<P: AsRef<Path>>(path: P) -> Result<Config> {
+pub fn get<P: AsRef<Path>>(path: P) -> Result<Config> {
     let file = File::open(path.as_ref())
         .with_context(|| format!("Failed to open config file {}", path.as_ref().display()))?;
     let reader = BufReader::new(file);
