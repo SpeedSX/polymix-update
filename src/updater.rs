@@ -1,12 +1,12 @@
 use anyhow::Result;
 use chrono::{DateTime, Local, NaiveDateTime, Utc};
-use glob::{glob_with, MatchOptions, Pattern};
+use glob::{MatchOptions, Pattern, glob_with};
 use std::{fs, path::PathBuf, process, time::SystemTime};
 
 use crate::{
     command::Command,
     config::Config,
-    db::{DBFile, DB},
+    db::{DB, DBFile},
 };
 
 pub struct Updater<'a> {
