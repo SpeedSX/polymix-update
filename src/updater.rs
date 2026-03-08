@@ -73,7 +73,7 @@ impl Updater<'_> {
     async fn download_files(&self, pattern_str: String) -> Result<()> {
         let mut client = self.connect().await?;
 
-        println!("Downloading files..."); // TODO do not download all files
+        println!("Downloading files:");
 
         let db_files = Self::get_matched_db_files(&mut client, &pattern_str).await?;
 
