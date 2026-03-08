@@ -14,4 +14,8 @@ COMMANDS:
         upload          Write files from current directory to database
         download        Read files from database and store in current directory
         list            list files stored in database
+
+FLAGS:
+        --sql-user, --user <name>            SQL Server user name (requires --sql-password)
+        --sql-password, --password <value>   SQL Server password (requires --sql-user)
 ```        

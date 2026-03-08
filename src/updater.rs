@@ -13,14 +13,24 @@ pub struct Updater<'a> {
     config: &'a Config,
     command: Command,
     update_mode_name: String,
+    sql_username: Option<String>,
+    sql_password: Option<String>,
 }
 
 impl Updater<'_> {
-    pub fn new<'a>(config: &'a Config, command: Command, update_mode_name: &str) -> Updater<'a> {
+    pub fn new<'a>(
+        config: &'a Config,
+        command: Command,
+        update_mode_name: &str,
+        sql_username: Option<String>,
+        sql_password: Option<String>,
+    ) -> Updater<'a> {
         Updater {
             config,
             command,
             update_mode_name: update_mode_name.to_owned(),
+            sql_username,
+            sql_password,
         }
     }
 
@@ -217,7 +227,12 @@ impl Updater<'_> {
     }
 
     async fn connect(&self) -> Result<DB> {
-        DB::connect(self.config.connection_string.as_str()).await
+        DB::connect(
+            self.config.connection_string.as_str(),
+            self.sql_username.as_deref(),
+            self.sql_password.as_deref(),
+        )
+        .await
     }
 
     fn format_date_time(system_time: SystemTime) -> String {

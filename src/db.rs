@@ -1,6 +1,7 @@
 use anyhow::{Result, anyhow};
 use chrono::{DateTime, NaiveDateTime, Utc};
 use tiberius::FromSql;
+use tiberius::AuthMethod;
 use tiberius::{Client, Config};
 use tiberius::{Row, SqlBrowser};
 use tokio::net::TcpStream;
@@ -19,8 +20,24 @@ pub struct DBFile {
 }
 
 impl DB {
-    pub async fn connect(connection_string: &str) -> Result<DB> {
-        let config = Config::from_ado_string(connection_string)?;
+    pub async fn connect(
+        connection_string: &str,
+        sql_username: Option<&str>,
+        sql_password: Option<&str>,
+    ) -> Result<DB> {
+        let mut config = Config::from_ado_string(connection_string)?;
+
+        match (sql_username, sql_password) {
+            (Some(username), Some(password)) => {
+                config.authentication(AuthMethod::sql_server(username, password));
+            }
+            (None, None) => {}
+            _ => {
+                return Err(anyhow!(
+                    "Both SQL username and password are required for SQL authentication"
+                ));
+            }
+        }
 
         println!("Connecting to server {}", config.get_addr());
 
