@@ -51,7 +51,7 @@ async fn run() -> Result<()> {
                 parsed_args.sql_password,
             )
             .run()
-            .await?
+            .await?;
         }
         Err(error) => {
             println!("{error}");
@@ -67,7 +67,7 @@ fn parse_args(args: &[String]) -> Result<ParsedArgs> {
         return Err(anyhow!("Not enough arguments."));
     }
 
-    let command = Command::from_str(&args[1]).map_err(|_| anyhow!("Unknown command '{}'.", args[1]))?;
+    let command = Command::from_str(&args[1]).map_err(|()| anyhow!("Unknown command '{}'.", args[1]))?;
     let mode = args[2].clone();
 
     let mut sql_username: Option<String> = None;
@@ -118,7 +118,7 @@ fn parse_args(args: &[String]) -> Result<ParsedArgs> {
                     return Err(anyhow!("Flag '--sql-password' was provided more than once."));
                 }
             }
-            _ => return Err(anyhow!("Unknown argument '{}'.", arg)),
+            _ => return Err(anyhow!("Unknown argument '{arg}'.")),
         }
 
         index += 1;
